@@ -49,6 +49,26 @@ def shuffle_and_stratified_split(data: pd.DataFrame, test_size: float = 0.2, ran
     return train_set, test_set
 
 
+def split_predictor_and_target(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, list, list]:
+
+    # create copy
+    df_copy = df.copy()
+
+    # define columns
+    df_predictors = df_copy.iloc[:, :4]
+    df_targets = df_copy.iloc[:, 4:]
+
+    # get column names of dataframes
+    columns_X = df_predictors.columns
+    columns_y = df_targets.columns
+
+    # extracting numpy arrays from dataframe
+    X_array = df_predictors.values
+    y_array = df_targets.values
+
+    return X_array, y_array, columns_X, columns_y
+
+
 def store_data(strat_train_set, strat_test_set):
     
     """Save stratified train and test sets as CSV files in the processed folder."""

@@ -1,34 +1,22 @@
 import os
-import joblib
 import pandas as pd
 import numpy as np
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestRegressor 
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import GridSearchCV, KFold
-from src.read_data import read_file
 from typing import Tuple
+from src.read_data import read_file
 
-# Define folders
+# Raw folder
 FOLDER_PROCESSED = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
-FOLDER_RAW = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'raw')
-FOLDER_MODEL = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'models')
-
 
 def read_input_data(filename: str, folder: str = 'raw') -> pd.DataFrame:
 
-    # Read input data        
-    if folder == "raw":
-        data = pd.read_csv(os.path.join(folder, filename), delimiter=',')
-    elif folder == "processed":
-        data = pd.read_csv(os.path.join(folder, filename), delimiter=',')
-    else:
-        print("Folder can be either: 'raw' or 'processed'")
-        
-    return data
+    df = read_file(folder=folder, filename=filename, delimiter=',')
+
+    return df
 
 
 def data_preprocessing(data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
@@ -71,49 +59,59 @@ def data_preprocessing(data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
     )
 
     # Fit and transform the data for predictor variables
-    transformed_data_predictor = col_trans_predictor.fit_transform(data_predictors)
+    X = col_trans_predictor.fit_transform(data_predictors)
     # Get the column names after transformation for predictor variables
-    transformed_column_names_predictor = col_trans_predictor.named_transformers_['num_pipeline_predictor'].named_steps['scale'].get_feature_names_out(numerical_columns_predictor)
+    X_columnnames = col_trans_predictor.named_transformers_['num_pipeline_predictor'].named_steps['scale'].get_feature_names_out(numerical_columns_predictor)
 
     # Fit and transform the data for the target variable
-    transformed_data_target = col_trans_target.fit_transform(data_target.to_frame())
+    y = col_trans_target.fit_transform(data_target.to_frame())
     # Get the column names after transformation for the target variable
-    transformed_column_names_target = col_trans_target.named_transformers_['target_pipeline'].named_steps['onehot'].get_feature_names_out(['species'])
+    y_columnnames = col_trans_target.named_transformers_['target_pipeline'].named_steps['onehot'].get_feature_names_out(['species'])
 
-    return transformed_data_predictor, transformed_column_names_predictor, transformed_data_target, transformed_column_names_target
+    return X, X_columnnames, y, y_columnnames
 
 
-def train_random_forest_regressor(X, y):
+def processed_data_to_dataframe(X: np.ndarray, X_columnnames: list, y:np.ndarray, y_columnnames:list) -> pd.DataFrame:
 
-    # Define Linear Regression model
-    forest_reg = RandomForestRegressor()
+    # Create dataframes for features and target
+    df_X = pd.DataFrame(data=X, columns=X_columnnames)
+    df_y = pd.DataFrame(data=y, columns=y_columnnames)
 
-    # Define the parameter grid for grid search
-    param_grid = [
-        {'n_estimators': [10, 20, 30, 40], 'max_features': [2, 4, 6, 8]},
-        {'bootstrap': [False], 'n_estimators': [3, 10], 'max_features': [2, 3, 4]},
-        ]
+    # Concatenate the DataFrames horizontally (axis=1)
+    df_combined = pd.concat([df_X, df_y], axis=1)
 
-    # Create 5-fold cross-validation object
-    cv = KFold(n_splits=5, shuffle=True, random_state=42)
+    return df_combined
 
-    # Perform GridSearchCV
-    grid_search = GridSearchCV(estimator=forest_reg,
-                               param_grid=param_grid,
-                               scoring='neg_mean_squared_error',
-                               cv=cv,
-                               return_train_score=True)
-    grid_search.fit(X, y)
 
-    # Print the best parameters from grid search
-    print("Best Parameters: ", grid_search.best_params_)
+def store_data(df: pd.DataFrame, filename:str):
+    
+    """Save processed train and test sets as CSV files in the processed folder."""
+    
+    try:
+        # define file path and filename
+        path = os.path.join(FOLDER_PROCESSED, filename)
+        # save data to CSV
+        df.to_csv(path, index=False)
+        print(f"Step 1 of 8: Successfully executed - processed {filename} data saved to: {path}")
 
-    # Get the best model from the grid search
-    best_model = grid_search.best_estimator_
+    except Exception as e:
+        print(f"Step 1 of 8: An error occurred while saving the data: {e}")
 
-    # Define storage folder
-    save_model_path = os.path.join(FOLDER_REG, "regression_model.joblib")
 
-    # Store model 
-    joblib.dump(best_model, save_model_path)
-    print("Regression model saved successfully")
+def main():
+
+    # process training data
+    df_train = read_input_data(filename='iris_train.csv', folder='raw')
+    X_train, X_train_columnnames, y_train, y_train_columnnames = data_preprocessing(data=df_train)
+    df_train_combined = processed_data_to_dataframe(X_train, X_train_columnnames, y_train, y_train_columnnames)
+    store_data(df=df_train_combined, filename='iris_train_processed.csv')
+
+    # process test data
+    df_test = read_input_data(filename='iris_test.csv', folder='raw')
+    X_test, X_test_columnnames, y_test, y_test_columnnames = data_preprocessing(data=df_test)
+    df_test_combined = processed_data_to_dataframe(X_test, X_test_columnnames, y_test, y_test_columnnames)
+    store_data(df=df_test_combined, filename='iris_test_processed.csv')
+
+
+if __name__ == '__main__':
+    main()
