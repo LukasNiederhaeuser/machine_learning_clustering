@@ -1,0 +1,10 @@
+# local package
+-e .
+
+# external packages
+ipykernel
+pandas
+pyarrow
+matplotlib
+scikit-learn
+seaborn
