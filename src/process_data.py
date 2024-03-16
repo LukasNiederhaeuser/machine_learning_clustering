@@ -12,6 +12,7 @@ from src.read_data import read_file
 # Raw folder
 FOLDER_PROCESSED = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
 
+
 def read_input_data(filename: str, folder: str = 'raw') -> pd.DataFrame:
 
     df = read_file(folder=folder, filename=filename, delimiter=',')
@@ -85,17 +86,16 @@ def processed_data_to_dataframe(X: np.ndarray, X_columnnames: list, y:np.ndarray
 
 def store_data(df: pd.DataFrame, filename:str):
     
-    """Save processed train and test sets as CSV files in the processed folder."""
     
     try:
         # define file path and filename
         path = os.path.join(FOLDER_PROCESSED, filename)
         # save data to CSV
         df.to_csv(path, index=False)
-        print(f"Step 1 of 8: Successfully executed - processed {filename} data saved to: {path}")
+        print(f"Successfully executed - processed {filename} data saved to: {path}")
 
     except Exception as e:
-        print(f"Step 1 of 8: An error occurred while saving the data: {e}")
+        print(f"An error occurred while saving the data: {e}")
 
 
 def main():

@@ -15,8 +15,6 @@ FILENAME_TEST = 'iris_test.csv'
 
 def load_data() -> pd.DataFrame:
     
-    """Load data from raw-folder and return the dataframe."""
-
     # Load data
     data = pd.read_csv(os.path.join(FOLDER_RAW, FILENAME_RAW), delimiter=",")
     
@@ -25,18 +23,6 @@ def load_data() -> pd.DataFrame:
 
 def shuffle_and_stratified_split(data: pd.DataFrame, test_size: float = 0.2, random_seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
     
-    """ Shuffle the data randomly and perform a stratified split into training and test sets.
-
-    Parameters:
-        - data: DataFrame, the input data.
-        - test_size: float, the proportion of the dataset to include in the test split.
-        - random_seed: int, seed for random number generation.
-
-    Returns:
-        - train_set: DataFrame, the training set.
-        - test_set: DataFrame, the test set.
-    """
-
     # shuffle the data randomly
     shuffled_data = data.sample(frac=1, random_state=random_seed)
 
@@ -70,9 +56,7 @@ def split_predictor_and_target(df: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray
 
 
 def store_data(strat_train_set, strat_test_set):
-    
-    """Save stratified train and test sets as CSV files in the processed folder."""
-    
+        
     try:
         # define file paths for train and test sets
         train_set_path = os.path.join(FOLDER_RAW, FILENAME_TRAIN)
@@ -82,10 +66,10 @@ def store_data(strat_train_set, strat_test_set):
         strat_train_set.to_csv(train_set_path, index=False)
         strat_test_set.to_csv(test_set_path, index=False)
 
-        print(f"Step 1 of 8: Successfully executed - stratified train and test set saved to: {train_set_path}")
+        print(f"Successfully executed - stratified train and test set saved to: {train_set_path}")
 
     except Exception as e:
-        print(f"Step 1 of 8: An error occurred while saving the data: {e}")
+        print(f"An error occurred while saving the data: {e}")
 
 
 def main():
