@@ -6,5 +6,6 @@ ipykernel
 pandas
 pyarrow
 matplotlib
-scikit-learn
 seaborn
+scikit-learn
+xgboost
